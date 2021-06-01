@@ -19,14 +19,19 @@ class visual_stim():
         #moras naredit še log
         self.user_input_text()
         self.text_screen()
+        self.screen_settings()
         self.visual_objects()
+        self.experiment_choice()
+        self.logger_start()
 
         self.title.draw()
         self.instructions.draw()
-        self.text_screen()
         self.win.flip()
         event.waitKeys(keyList="space")
         self.win.flip()
+        self.fixation.draw()
+        self.win.flip()
+
 
     def text_screen(self):
         self.text = {
@@ -44,9 +49,7 @@ class visual_stim():
     def user_input_text(self):
         self.experiment_info = { "Language": ["Slovene", "English"],
                             "Subject": "0_test",
-                            "modality": ["tVNS100", "tVNS25", "xVNS", "blockVNS"],
                             "Practice run": False,
-                            "Interface": ["Cedrus", "Keyboard"], 
                             "Tok stimulusa [microA]": 200,
                             "block sequence": 1,
                             "MRI TR": 1.3}
@@ -100,11 +103,6 @@ class visual_stim():
         self.fixation = visual.Circle(win=self.win, pos=[0, 0], radius=self.fixation_radius, lineColor=self.fixation_color, fillColor=self.fixation_color, lineColorSpace=self.color_space, fillColorSpace=self.color_space, lineWidth=self.fixation_linewidth, units="pix")
 
 
-    def randomizator_blokov(self):
-        r = RandomOrgClient("47f62947-d7ca-45c0-96bf-1c6fe74c12c1")
-        self.random_number = r.generate_integers(1, 1, 3)
-
-
     def logger_start(self):
         log_folder = os.path.join("..", "results", "tVNS")
         if not os.path.exists(log_folder):
@@ -114,15 +112,25 @@ class visual_stim():
         print("# Starting log file for subject %s at %s" % (self.experiment_info["Subject"], data.getDateStr(format="%d.%m.%Y, %H:%M:%S")), file=self.log_file)
 
 
-    def cedrus(self, cedrus_active = False):
-        syncButton = 5
-        if cedrus_active == False: 
-            TR = float(self.experiment_info["MRI TR"]) 
-            self.cedruss = base.KeyboardASCII(syncButton, TR)
-        else:
+    def experiment_choice(self):
+        syncButton = 5  
+        if self.experiment_info["Practice run"] == False:
+            self.n_trials = 100
             self.flip = True
             self.cedruss = base.CedrusASCII(syncButton)
-
+            self.external_triger = 1  
+            self.posX = 1280  
+        else:
+            self.n_trials = 20
+            self.TR = float(self.experiment_info["MRI TR"]) 
+            self.cedruss = base.KeyboardASCII(syncButton, self.TR)
+            self.external_triger = 0
+            self.flip = False
+            self.posX = 0  
+            self.betweenStim_numberOFstim = 1
+        
+    def returner(self):
+        return (self.cedruss, self.n_trials)
 
     def script_ender(self):
         # wait
@@ -170,4 +178,33 @@ class exp_block():
 
 
 if __name__ == "__main__":
+    stimulacija = exp_block()
     eksperiment1 = visual_stim()
+    
+    cedruss, n_trials = eksperiment1.returner()
+    stimulacija.stim()
+
+    terminate = False
+    for trial in range(n_trials):
+        # quit the experiment with the q key
+        if event.getKeys(keyList=['q', 'Q']):
+#            print("===> Script ended preliminary via the q key (%s)" % ((data.getDateStr(format="%Y-%m-%d %H:%M:%S"))))
+#            print("# Script ended preliminary via the q key (%s)" % ((data.getDateStr(format="%Y-%m-%d %H:%M:%S"))), file=log_file)
+            terminate = True
+            #################################
+            stimulacija.stim() # tukaj mora ugasnit
+            #################################
+            core.quit()
+            break
+
+        # AV try to sync every stimuly with MR pulse (TR) when immaging of new volume starts
+        time, boldClock = cedruss.waitSync()
+        
+        stimulacija.stim() # Mora dobit samo informacije
+
+        print("==> we are in # %d loop" % trial)
+        
+        if terminate == True:
+            break
+
+    eksperiment1.script_ender()
