@@ -5,9 +5,9 @@ import sys
 import time
 #from rdoclient_py3 import RandomOrgClient
 
-sys.path.append("C:/Users/User/Documents/LC_stimulator/gpsy/gPsy")
+sys.path.append(os.path.join(os.path.dirname(__file__), "lib"))
 import base
-import stimulator
+from stimulator import UART
 
 class visual_stim():
     def __init__(self):
@@ -163,9 +163,10 @@ class exp_block():
         self.uart = UART(self.port, self.baudrate, 0.5)
 
 
-    def stim(self):
+    def stim(self, period = 10000, pulse_width = 300, biphase = 2, current = 300, duration_minutes = 0, between_pulse_period = 80, mode = 0, send_new_command = True):
         self.uart.open_port()
-        self.uart.send(f"PARAMS-pr10000-ln300-bp2-cr300-md2-sp1-dh0-dm0-ds60-ah0-am0-as30-tm6-sh0-sm0-ss1-st1-wp80-es0!")
+        if send_new_command == True:
+            self.uart.send(f"PARAMS-pr{period}-ln{pulse_width}-bp{biphase}-cr{current}-md{mode}-sp1-dh0-dm{duration_minutes}-ds60-ah0-am0-as30-tm6-sh0-sm0-ss1-st1-wp{between_pulse_period}-es0!")
         time.sleep(1)
         self.uart.send("status!")
         self.uart.receive(350)
@@ -182,7 +183,7 @@ if __name__ == "__main__":
     eksperiment1 = visual_stim()
     
     cedruss, n_trials = eksperiment1.returner()
-    stimulacija.stim()
+    stimulacija.stim(period = 10000, pulse_width = 300, biphase = 2, current = 300, duration_minutes = 0, between_pulse_period = 80, mode = 0, send_new_command = True)
 
     terminate = False
     for trial in range(n_trials):
@@ -192,7 +193,7 @@ if __name__ == "__main__":
 #            print("# Script ended preliminary via the q key (%s)" % ((data.getDateStr(format="%Y-%m-%d %H:%M:%S"))), file=log_file)
             terminate = True
             #################################
-            stimulacija.stim() # tukaj mora ugasnit
+            stimulacija.stim(mode = 0) # tukaj mora ugasnit
             #################################
             core.quit()
             break
@@ -200,7 +201,7 @@ if __name__ == "__main__":
         # AV try to sync every stimuly with MR pulse (TR) when immaging of new volume starts
         time, boldClock = cedruss.waitSync()
         
-        stimulacija.stim() # Mora dobit samo informacije
+        stimulacija.stim(send_new_command = False) # Mora dobit samo informacije
 
         print("==> we are in # %d loop" % trial)
         
