@@ -1,4 +1,5 @@
 from __future__ import print_function, division
+from posixpath import basename
 from psychopy import core, data, event, gui, visual, sound
 import os.path
 import sys
@@ -121,7 +122,7 @@ class visual_stim():
             self.external_triger = 1  
             self.posX = 1280  
         else:
-            self.n_trials = 20
+            self.n_trials = 20000
             self.TR = float(self.experiment_info["MRI TR"]) 
             self.cedruss = base.KeyboardASCII(syncButton, self.TR)
             self.external_triger = 0
@@ -163,10 +164,11 @@ class exp_block():
         self.uart = UART(self.port, self.baudrate, 0.5)
 
 
-    def stim(self, period = 10000, pulse_width = 300, biphase = 2, current = 300, duration_minutes = 0, between_pulse_period = 80, mode = 0, send_new_command = True):
+    def stim(self, period = 10000, pulse_width = 300, biphase = 2, current = 300, duration_minutes = 0, duration_seconds = 20, after_seconds = 10, number_of_wagons = 6, 
+            stim_ONOFF_mode2 = 1, between_pulse_period = 80, mode = 0, send_new_command = True):
         self.uart.open_port()
         if send_new_command == True:
-            self.uart.send(f"PARAMS-pr{period}-ln{pulse_width}-bp{biphase}-cr{current}-md{mode}-sp1-dh0-dm{duration_minutes}-ds60-ah0-am0-as30-tm6-sh0-sm0-ss1-st1-wp{between_pulse_period}-es0!")
+            self.uart.send(f"PARAMS-pr{period}-ln{pulse_width}-bp{biphase}-cr{current}-md{mode}-sp{stim_ONOFF_mode2}-dh0-dm{duration_minutes}-ds{duration_seconds}-ah0-am0-as{after_seconds}-tm{number_of_wagons}-sh0-sm0-ss1-st1-wp{between_pulse_period}-es0!")
         time.sleep(1)
         self.uart.send("status!")
         self.uart.receive(350)
@@ -183,7 +185,7 @@ if __name__ == "__main__":
     eksperiment1 = visual_stim()
     
     cedruss, n_trials = eksperiment1.returner()
-    stimulacija.stim(period = 10000, pulse_width = 300, biphase = 2, current = 300, duration_minutes = 0, between_pulse_period = 80, mode = 0, send_new_command = True)
+    stimulacija.stim(mode = 2, send_new_command = True)
 
     terminate = False
     for trial in range(n_trials):
@@ -199,13 +201,13 @@ if __name__ == "__main__":
             break
 
         # AV try to sync every stimuly with MR pulse (TR) when immaging of new volume starts
-        time, boldClock = cedruss.waitSync()
-        
-        stimulacija.stim(send_new_command = False) # Mora dobit samo informacije
+        TMtime, boldClock = cedruss.waitSync()
+        if trial % 10 == 0:
+            stimulacija.stim(send_new_command = False) # Mora dobit samo informacije
 
         print("==> we are in # %d loop" % trial)
         
         if terminate == True:
             break
-
+    stimulacija.stim(mode = 0)
     eksperiment1.script_ender()
