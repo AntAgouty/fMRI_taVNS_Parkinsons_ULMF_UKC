@@ -51,6 +51,7 @@ class visual_stim():
         self.experiment_info = { "Language": ["Slovene", "English"],
                             "Subject": "0_test",
                             "Practice run": False,
+                            "Stimulation protocol": ["5/250", "25/250", "100/250"],
                             "Tok stimulusa [microA]": 200,
                             "block sequence": 1,
                             "MRI TR": 1.3}
@@ -131,7 +132,7 @@ class visual_stim():
             self.betweenStim_numberOFstim = 1
         
     def returner(self):
-        return (self.cedruss, self.n_trials)
+        return (self.cedruss, self.n_trials, self.experiment_info["Stimulation protocol"], self.experiment_info["Tok stimulusa [microA]"])
 
     def script_ender(self):
         # wait
@@ -184,15 +185,18 @@ if __name__ == "__main__":
     stimulacija = exp_block()
     eksperiment1 = visual_stim()
     
-    cedruss, n_trials = eksperiment1.returner()
-    stimulacija.stim(mode = 2, send_new_command = True)
+    cedruss, n_trials, protokol, tok = eksperiment1.returner()
+    perioda_med_pulzi, dolzina_pulza = protokol.split("/")
+    perioda_med_pulzi = 100000 / int(perioda_med_pulzi)
+
+    stimulacija.stim(mode = 2, send_new_command = True, current = tok, period = perioda_med_pulzi, pulse_width = int(dolzina_pulza))
 
     terminate = False
     for trial in range(n_trials):
         # quit the experiment with the q key
         if event.getKeys(keyList=['q', 'Q']):
-#            print("===> Script ended preliminary via the q key (%s)" % ((data.getDateStr(format="%Y-%m-%d %H:%M:%S"))))
-#            print("# Script ended preliminary via the q key (%s)" % ((data.getDateStr(format="%Y-%m-%d %H:%M:%S"))), file=log_file)
+            print("===> Script ended preliminary via the q key (%s)" % ((data.getDateStr(format="%Y-%m-%d %H:%M:%S"))))
+            print("# Script ended preliminary via the q key (%s)" % ((data.getDateStr(format="%Y-%m-%d %H:%M:%S"))), file=log_file)
             terminate = True
             #################################
             stimulacija.stim(mode = 0) # tukaj mora ugasnit
