@@ -33,7 +33,7 @@ class UART:
 		b = raw.decode('latin')
 		words = b.split()
 		c = int(words[14])
-		return c
+		return raw
 
 	def configure(self, new):
 		self.port.close()

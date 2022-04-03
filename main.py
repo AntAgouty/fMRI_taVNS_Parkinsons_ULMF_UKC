@@ -196,7 +196,7 @@ if __name__ == "__main__":
         # quit the experiment with the q key
         if event.getKeys(keyList=['q', 'Q']):
             print("===> Script ended preliminary via the q key (%s)" % ((data.getDateStr(format="%Y-%m-%d %H:%M:%S"))))
-            print("# Script ended preliminary via the q key (%s)" % ((data.getDateStr(format="%Y-%m-%d %H:%M:%S"))), file=log_file)
+#            print("# Script ended preliminary via the q key (%s)" % ((data.getDateStr(format="%Y-%m-%d %H:%M:%S"))), file=log_file)
             terminate = True
             #################################
             stimulacija.stim(mode = 0) # tukaj mora ugasnit
